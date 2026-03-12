@@ -1,0 +1,13 @@
+DATA_DIR = "data"
+SYMBOL_FILE = "symbols.txt"
+
+PAGE_SIZE = 1500
+
+# crawler
+MAX_WORKERS = 10
+RETRY = 3
+RETRY_SLEEP = 3
+
+# scheduling
+CRAWL_INTERVAL_MINUTES = 30
+MERGE_TIME = "15:15"
