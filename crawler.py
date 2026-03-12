@@ -26,12 +26,12 @@ def crawl_symbol(symbol):
 
             df = stock.quote.intraday(page_size=PAGE_SIZE)
 
-            symbol_dir = os.path.join(DATA_DIR, symbol)
-            os.makedirs(symbol_dir, exist_ok=True)
+            raw_dir = os.path.join(DATA_DIR, symbol, "raw", date_str)
+            os.makedirs(raw_dir, exist_ok=True)
 
             filename = f"{symbol}-{date_str}-{time_str}.csv"
-            filepath = os.path.join(symbol_dir, filename)
-
+            filepath = os.path.join(raw_dir, filename)
+            
             df.to_csv(filepath, index=False)
 
             logger.info(f"{symbol} saved | rows={len(df)}")

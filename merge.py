@@ -7,105 +7,63 @@ from logger import logger
 
 def merge_symbol(symbol):
 
-    folder = os.path.join(DATA_DIR, symbol)
+    raw_root = os.path.join(DATA_DIR, symbol, "raw")
 
-    if not os.path.exists(folder):
+    if not os.path.exists(raw_root):
         return
 
-    files = [
-        os.path.join(folder, f)
-        for f in os.listdir(folder)
-        if f.endswith(".csv")
-    ]
+    dates = os.listdir(raw_root)
 
-    if not files:
-        return
+    for date in dates:
 
-    dfs = []
+        raw_folder = os.path.join(raw_root, date)
 
-    for f in files:
-        try:
-            dfs.append(pd.read_csv(f))
-        except Exception as e:
-            logger.error(f"{f} read error | {e}")
+        files = [
+            os.path.join(raw_folder, f)
+            for f in os.listdir(raw_folder)
+            if f.endswith(".csv")
+        ]
 
-    df = pd.concat(dfs, ignore_index=True)
+        if not files:
+            continue
 
-    before = len(df)
+        dfs = []
 
-    # drop duplicate rows
-    df = df.drop_duplicates()
+        for f in files:
+            try:
+                dfs.append(pd.read_csv(f))
+            except Exception as e:
+                logger.error(f"{f} read error | {e}")
 
-    after = len(df)
+        if not dfs:
+            continue
 
-    logger.info(f"{symbol} duplicates removed: {before-after}")
+        df = pd.concat(dfs, ignore_index=True)
 
-    output = os.path.join(folder, f"{symbol}_FULL.csv")
+        before = len(df)
 
-    df.to_csv(output, index=False)
+        # drop duplicate
+        df = df.drop_duplicates(
+            subset=["time","price","volume", "id"],
+            keep="last"
+        )
 
-    logger.info(f"{symbol} merged | rows={len(df)}")
+        after = len(df)
 
+        logger.info(f"{symbol} {date} duplicates removed: {before-after}")
 
-def merge_all():
+        # sort nếu có time
+        if "time" in df.columns:
+            df = df.sort_values("time")
 
-    logger.info("Merge started")
+        merged_dir = os.path.join(DATA_DIR, symbol, "merged", date)
+        os.makedirs(merged_dir, exist_ok=True)
 
-    symbols = os.listdir(DATA_DIR)
+        output = os.path.join(merged_dir, f"{symbol}-{date}.csv")
 
-    for symbol in symbols:
-        merge_symbol(symbol)
-import os
-import pandas as pd
+        df.to_csv(output, index=False)
 
-from config import DATA_DIR
-from logger import logger
-
-
-def merge_symbol(symbol):
-
-    folder = os.path.join(DATA_DIR, symbol)
-
-    if not os.path.exists(folder):
-        return
-
-    files = [
-        os.path.join(folder, f)
-        for f in os.listdir(folder)
-        if f.endswith(".csv")
-    ]
-
-    if not files:
-        return
-
-    dfs = []
-
-    for f in files:
-        try:
-            dfs.append(pd.read_csv(f))
-        except Exception as e:
-            logger.error(f"{f} read error | {e}")
-
-    df = pd.concat(dfs, ignore_index=True)
-
-    before = len(df)
-
-    # bỏ dòng trùng
-    df = df.drop_duplicates()
-
-    after = len(df)
-
-    logger.info(f"{symbol} duplicates removed: {before-after}")
-
-    # sort theo thời gian nếu có cột time
-    if "time" in df.columns:
-        df = df.sort_values("time")
-
-    output = os.path.join(folder, f"{symbol}_FULL.csv")
-
-    df.to_csv(output, index=False)
-
-    logger.info(f"{symbol} merged | rows={len(df)}")
+        logger.info(f"{symbol} {date} merged | rows={len(df)}")
 
 
 def merge_all():
@@ -124,8 +82,5 @@ def merge_all():
     logger.info("Merge finished")
 
 
-# chạy thủ công
 if __name__ == "__main__":
-
     merge_all()
-    logger.info("Merge finished")

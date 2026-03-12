@@ -12,4 +12,4 @@ __pycache__/
 # system files
 .DS_Store
 
-data/
+data/*/raw
